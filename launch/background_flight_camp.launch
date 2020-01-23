@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <arg name="world/map" default="tutorial_1.world"/>
+
+  <group>
+    <!-- <include file="$(find dd2419_simulation)/launch/simulation.launch" /> -->
+    <include file="$(find dd2419_simulation)/launch/aruco.launch" />
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find flight_camp)/include/flight_camp.rviz" output="screen" />
+    <node name="navgoal3" pkg="flight_camp" type="navgoal3.py" output="screen" />
+    <node name="displaymapmarkers" pkg="flight_camp" type="displaymapmarkers.py" output="screen" args="$(find dd2419_resources)/worlds_json/$(arg world/map).json"/>
+    <node name="colorseg" pkg="flight_camp" type="colorseg.py" output="screen" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 1 map cf1/odom" />
+    <!-- <node name="imagecircle" pkg="flight_camp" type="imagecircle.py" /> -->
+    
+  </group>
+
+
+</launch>
+
