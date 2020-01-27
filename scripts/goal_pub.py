@@ -7,7 +7,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 # import tf2_ros
 # import tf2_geometry_msgs
-# from crazyflie_driver.msg import Position
+from crazyflie_driver.msg import Position
 
 
 class GoalPublisher():
@@ -16,25 +16,24 @@ class GoalPublisher():
         # Pull ROS parameters from launch file:
         param = rospy.search_param("goal_topic")
         self.goal_topic = rospy.get_param(param)
+        param = rospy.search_param("goal_frame")
+        self.goal_frame = rospy.get_param(param)
+        
         
         # Initialize goal message
         self.goal = PoseStamped()
-
-
+        self.goal.header.frame_id = self.goal_frame
         self.pub_goal  = rospy.Publisher(self.goal_topic, PoseStamped, queue_size=10)
 
-    def goal_build(self):
+    def goal_build(self, x, y, z, yaw):
         # Position in [m] relative to odom origin
-        self.goal.pose.position.x = 0.0
-        self.goal.pose.position.y = 0.0
-        self.goal.pose.position.z = 0.4
-        # Orientation (r,p,y) in [deg] relative to odom origin
-        roll = 0
-        pitch = 0
-        yaw = 0 # About z-axis
+        self.goal.pose.position.x = x
+        self.goal.pose.position.y = y
+        self.goal.pose.position.z = z
+        # Orientationin [deg] relative to odom origin
+        yaw = yaw # About z-axis
         # Convert to quaternion
-        quat = quaternion_from_euler(math.radians(roll), \
-                math.radians(pitch), math.radians(yaw))
+        quat = quaternion_from_euler(0, 0, math.radians(yaw))
         self.goal.pose.orientation.x = quat[0]
         self.goal.pose.orientation.y = quat[1]
         self.goal.pose.orientation.z = quat[2]
@@ -42,12 +41,21 @@ class GoalPublisher():
 
 
     def goal_pub(self):
-        self.goal_build()
-        if self.goal.pose.position.z == 0.0:
-            self.goal.pose.position.z = 0.4        
-        while not rospy.is_shutdown():
+        moverate = rospy.Rate(.3) # hz
+        for i in range(5):
+            # Send hard coded poses
+            x_t = i
+            y_t = i/2.
+            z_t = .4 + i/10.
+            yaw_t = 10*i
+            # Build goal with targets
+            self.goal_build(x_t,y_t,z_t,yaw_t)
+            if self.goal.pose.position.z == 0.0:
+                self.goal.pose.position.z = 0.4        
+            # Send goal
             self.pub_goal.publish(self.goal)
-        rospy.loginfo("New goal sent")
+            rospy.loginfo("New goal sent")
+            moverate.sleep()
 
 if __name__ == '__main__':
     rospy.init_node('goal_pub', anonymous=True)

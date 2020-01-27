@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <arg name="map_frame" default="map"/>
+  <arg name="camera_frame" default="camera_link"/>
+  <arg name="base_frame" default="cf1/base_link"/>
+  <arg name="aruco_sub_topic" default="/aruco/markers"/>
+  <arg name="aruco_pub_topic" default="/aruco/detected"/>
+  
+  
+  
+  <!-- Static transform drone -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="cam_to_drone" args="0.01 0 0.02 -1.57 0 -1.57 $(arg base_frame) $(arg camera_frame)" />
+
+
+  <node name="aruco_drone_tf" pkg="flight_camp" type="aruco_drone_tf.py" output="screen">
+
+    <param name="map_frame" value="$(arg map_frame)"/>
+    <param name="camera_frame" value="$(arg camera_frame)"/>
+    <param name="aruco_sub_topic" value="$(arg aruco_sub_topic)"/>
+    <param name="aruco_pub_topic" value="$(arg aruco_pub_topic)"/>
+
+  </node>
+
+
+
+</launch>
+
