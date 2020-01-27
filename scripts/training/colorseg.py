@@ -18,6 +18,12 @@ class image_converter:
     self.bridge = CvBridge()
     self.image_sub = rospy.Subscriber("/cf1/camera/image_raw", Image, self.callback)
 
+    self.color = 'red'
+    #self.color = 'blue'
+    #self.color = 'yellow'
+    #self.color = 'white'
+
+
   def callback(self,data):
     # Convert the image from OpenCV to ROS format
     try:
@@ -29,8 +35,20 @@ class image_converter:
     hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
 
     # define range of the color we look for in the HSV space
-    lower = np.array([0,0,250])
-    upper = np.array([255,5,255])
+    if self.color == 'red':
+      lower = np.array([160,0,0])
+      upper = np.array([180,255,150])
+    if self.color == 'blue': # NOT TUNED
+      lower = np.array([0,0,0])
+      upper = np.array([200,100,100])
+    if self.color == 'yellow': # NOT TUNED
+      lower = np.array([0,0,0])
+      upper = np.array([5,100,100])
+    if self.color == 'white': # NOT TUNED
+      lower = np.array([0,0,0])
+      upper = np.array([10,100,100])
+
+
 
     # Threshold the HSV image to get only the pixels in ranage
     mask = cv2.inRange(hsv, lower, upper)

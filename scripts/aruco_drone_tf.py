@@ -2,7 +2,7 @@
 
 import math
 import rospy
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped, PoseArray, PoseWithCovarianceStamped
 import numpy as np
 import tf2_ros
 import tf2_geometry_msgs
@@ -35,6 +35,14 @@ class ArucoTF():
         self.t = TransformStamped()
         self.t.header.frame_id = self.cam_frame
 
+        # Initialize listener for estimated pose of markers in map frame
+        self.tfBuffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tfBuffer)
+
+        # Initialize publisher for estimated pose of markers in map frame
+        # self.posepub = rospy.Publisher(self.aruco_pub_topic, PoseArray, queue_size=10)
+        # self.pub = PoseArray()
+        # self.pub.header.frame_id = self.map_frame
 
         # Initialize callback variables
         self.marker_poses = None        
@@ -61,7 +69,24 @@ class ArucoTF():
                     self.t.transform.translation = marker.pose.pose.position
                     self.t.transform.rotation = marker.pose.pose.orientation
                     self.br.sendTransform(self.t)
+ 
+                    #### WHY DOES IT CONTINUE TO BROADCAST POSE OF LAST SEEN MARKER?
+
+                    # Call publish function so estimated marker pose can be read in map frame
+                    #self.map_pose_pub()
             rate.sleep()
+
+    # def map_pose_pub(self):
+    #     trans = None
+    #     try:
+    #         trans = self.tfBuffer.lookup_transform(self.map_frame, self.t.child_frame_id, rospy.Time(0), rospy.Duration(1.0))
+    #     except:
+    #         rospy.loginfo('Failure of lookup transfrom from estimated marker pose to map')
+    #     if trans:
+    #         self.pub.header.stamp = rospy.Time.now()
+    #         self.pub.pose.pose.position = trans.transform.translation
+    #         self.pub.pose.pose.orientation = trans.transform.rotation
+    #         self.posepub.publish(self.pub) 
 
 
     def marker_callback(self, msg):

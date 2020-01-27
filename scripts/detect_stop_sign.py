@@ -4,10 +4,15 @@ import math
 import rospy
 from geometry_msgs.msg import PoseStamped
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
+import numpy as np
 
 # import tf2_ros
 # import tf2_geometry_msgs
 from crazyflie_driver.msg import Position
+
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
+
 
 
 class GoalPublisher():
@@ -18,8 +23,9 @@ class GoalPublisher():
         self.goal_topic = rospy.get_param(param)
         param = rospy.search_param("goal_frame")
         self.goal_frame = rospy.get_param(param)
-        
-        
+        param = rospy.search_param("send_goal")
+        self.send_goal_bool = rospy.get_param(param)
+                
         # Initialize goal message and publisher
         self.goal = PoseStamped()
         self.goal.header.frame_id = self.goal_frame
@@ -44,22 +50,6 @@ class GoalPublisher():
 
 
     def goal_pub(self):
-        # moverate = rospy.Rate(.3) # hz
-        # for i in range(5):
-        #     # Send hard coded poses
-        #     x_t = i
-        #     y_t = i/2.
-        #     z_t = .4 + i/10.
-        #     yaw_t = 10*i
-        #     # Build goal with targets
-        #     self.goal_build(x_t,y_t,z_t,yaw_t)
-        #     if self.goal.pose.position.z == 0.0:
-        #         self.goal.pose.position.z = 0.4        
-        #     # Send goal
-        #     self.pub_goal.publish(self.goal)
-        #     rospy.loginfo("New goal sent")
-        #     moverate.sleep()
-
         # Build goal for stop sign detection (awesome map)
         self.goal_build(8.5,0,0.4,0)
         if self.goal.pose.position.z == 0.0:
@@ -69,17 +59,69 @@ class GoalPublisher():
         rospy.loginfo("New goal sent")
 
 
+class ObjectDetection():
+    
+    def __init__(self):
+        # Pull ROS parameters from launch file:
+        param = rospy.search_param("segmented_image_topic")
+        self.seg_img_top = rospy.get_param(param)
+        param = rospy.search_param("detection_threshold")
+        self.detect_thresh = rospy.get_param(param)
+        # Initialize callback variables
+        self.seg_image = None
+
+        # For unpacking image
+        self.bridge = CvBridge()
+
+        # Establish subscription to Segmented Image
+        rospy.Subscriber(self.seg_img_top, Image, self.image_callback)
+        # Delay briefly for subscriber to find message
+        rospy.sleep(0.5)
+
+    def object_detect(self):
+        rate = rospy.Rate(5) # hz - limit rate to camera publish rate
+        while not rospy.is_shutdown():
+            self.img_shape = self.seg_image.shape
+            self.pixel_thresh = (self.detect_thresh/100.)*self.img_shape[0]*self.img_shape[1]
+            self.pixel_count = np.nonzero(self.seg_image)[0]
+            
+            if self.pixel_count.size > self.pixel_thresh:
+                print("Object passes detection threshold at time: ", rospy.get_time())
+                #image_array = self.seg_image
+                #print(image_array)
+
+
+            rate.sleep()
+
+    
+    def image_callback(self, msg):
+        # Convert the image from OpenCV to ROS format
+        try:
+            self.seg_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        except CvBridgeError as e:
+            print(e)
+
 
 if __name__ == '__main__':
-    rospy.init_node('goal_pub', anonymous=True)
+    
+    rospy.init_node('detect_stop_sign', anonymous=True)
     rospy.loginfo("Successful initilization of node")
     
     goalpub = GoalPublisher()
-    rospy.loginfo("Successful execution of init function")
+    rospy.loginfo("Successful execution of goal publish init function")
+    
+    if goalpub.send_goal_bool:
+        goalpub.goal_pub()
+        rospy.loginfo("Successfully sent goal")
+    else:
+        rospy.loginfo("Not sending goal")
+    #######################################
+    obj_det = ObjectDetection()
+    rospy.loginfo("Successful execution of object detection init function")
+
+    obj_det.object_detect()
 
 
-    goalpub.goal_pub()
-    rospy.loginfo("Successfully ran script")
 
         # def publish_cmd(goal):
     #     # Need to tell TF that the goal was just generated
