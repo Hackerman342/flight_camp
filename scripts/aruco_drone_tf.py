@@ -49,22 +49,19 @@ class ArucoTF():
 
         #### ALSO PUBLISH POSE OF MARKER AS POSESTAMPED IN MAP FRAME
 
-        # # Initialize goal message
-        # self.goal = PoseStamped()
-        # self.goal.header.frame_id = self.goal_frame
-        # self.pub_goal  = rospy.Publisher(self.goal_topic, PoseStamped, queue_size=10)
-
     
     def transform_markers(self):
         rate = rospy.Rate(30) # hz - limit rate to camera publish rate
         while not rospy.is_shutdown():
             if self.marker_poses:
+                print(self.marker_poses)
                 # Use a temp value so self.fid_pose.transforms 
                 # does not update before calculations complete
                 temp = self.marker_poses.markers
+                time = rospy.Time.now()
                 for i in range(len(temp)):
                     marker = temp[i]
-                    self.t.header.stamp = rospy.Time.now()
+                    self.t.header.stamp = time
                     self.t.child_frame_id = self.aruco_pub_topic+str(marker.id)
                     self.t.transform.translation = marker.pose.pose.position
                     self.t.transform.rotation = marker.pose.pose.orientation
@@ -74,6 +71,8 @@ class ArucoTF():
 
                     # Call publish function so estimated marker pose can be read in map frame
                     #self.map_pose_pub()
+            # Delete all marker poses so it only publishes again if detected again
+            self.marker_poses = None
             rate.sleep()
 
     # def map_pose_pub(self):

@@ -10,7 +10,7 @@
   <arg name="segmented_image_topic"     default="/color_seg"/>
   <!-- Percentage [0%, 100%] of pixels passing segmentation for detection to pass -->
   <!-- Very small values (x << 5 ) recommended -->
-  <arg name="detection_threshold"       default="3"/>
+  <arg name="detection_threshold"       default="1"/>
 
 
   <node name="detect_stop_sign" pkg="flight_camp" type="detect_stop_sign.py" output="screen">

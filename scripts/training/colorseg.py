@@ -19,9 +19,9 @@ class image_converter:
     self.image_sub = rospy.Subscriber("/cf1/camera/image_raw", Image, self.callback)
 
     self.color = 'red'
-    #self.color = 'blue'
-    #self.color = 'yellow'
-    #self.color = 'white'
+    self.color = 'blue'
+    self.color = 'yellow'
+    #self.color = 'white' # NOT TUNED
 
 
   def callback(self,data):
@@ -38,15 +38,15 @@ class image_converter:
     if self.color == 'red':
       lower = np.array([160,0,0])
       upper = np.array([180,255,150])
-    if self.color == 'blue': # NOT TUNED
-      lower = np.array([0,0,0])
-      upper = np.array([200,100,100])
-    if self.color == 'yellow': # NOT TUNED
-      lower = np.array([0,0,0])
-      upper = np.array([5,100,100])
+    if self.color == 'blue':
+      lower = np.array([100,0,0])
+      upper = np.array([130,255,150])
+    if self.color == 'yellow':
+      lower = np.array([20,0,0])
+      upper = np.array([40,255,150])
     if self.color == 'white': # NOT TUNED
-      lower = np.array([0,0,0])
-      upper = np.array([10,100,100])
+      lower = np.array([0,0,250])
+      upper = np.array([255,5,255])
 
 
 
